@@ -147,13 +147,24 @@ const MembershipSection = ({ id }) => {
 
                 {/* Footer Strip: Resources (Discover More) */}
                 <div className="border-t border-border pt-12">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="text-center md:text-left">
+                    <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-8">
+                        {/* Logo Section - Left */}
+                        <div className="flex justify-center md:justify-start">
+                            <img
+                                src="/images/lacqf/logo completa.webp"
+                                alt="LACQ Feynman Logo Completa"
+                                className="h-12 w-auto object-contain"
+                            />
+                        </div>
+
+                        {/* Text Section - Center */}
+                        <div className="text-center">
                             <h4 className="text-xl font-title font-semibold mb-1">Explore Mais</h4>
                             <p className="text-sm text-muted-foreground">Conteúdos curados para impulsionar seu aprendizado.</p>
                         </div>
 
-                        <div className="flex flex-wrap justify-center gap-4">
+                        {/* Resources Section - Right */}
+                        <div className="flex flex-wrap justify-center md:justify-end gap-4">
                             {resources.map((res, idx) => {
                                 const colorClasses = {
                                     red: "bg-red-500/10 text-red-500 hover:shadow-red-500/5",
