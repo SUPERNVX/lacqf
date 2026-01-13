@@ -1,535 +1,75 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Hero({ id }) {
-  // Canvas-based hero with GSAP-driven parameters and a ScrollTrigger.
-  // We render an atmospheric background, a glitched orb, ASCII particles,
-  // and a throttled film-grain overlay. Performance notes:
-  // - Canvas size updates on resize, not per frame.
-  // - Grain is throttled; ASCII density reduced.
-  // - We coordinate with theme transitions via a global flag to avoid jank.
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const grainCanvasRef = useRef(null);
-  const frameRef = useRef(0);
-  const scrollProgressRef = useRef(0);
-  const timeRef = useRef(0);
-  const [uiProgress, setUiProgress] = useState(0);
-  const grainLastTimeRef = useRef(0);
-  const sizeRef = useRef({ width: 0, height: 0 });
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const grainCanvas = grainCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const grainCtx = grainCanvas.getContext('2d');
-
-    const density = ' .:-=+*#%@';
-
-    // Animation parameters we tween with GSAP.
-    const params = {
-      rotation: 0,
-      atmosphereShift: 0,
-      glitchIntensity: 0,
-      glitchFrequency: 0
-    };
-
-    gsap.to(params, {
-      rotation: Math.PI * 2,
-      duration: 20,
-      repeat: -1,
-      ease: "none"
-    });
-
-    gsap.to(params, {
-      atmosphereShift: 1,
-      duration: 6,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
-
-    // Glitch animation
-    gsap.to(params, {
-      glitchIntensity: 1,
-      duration: 0.1,
-      repeat: -1,
-      yoyo: true,
-      ease: "power2.inOut",
-      repeatDelay: Math.random() * 3 + 1
-    });
-
-    gsap.to(params, {
-      glitchFrequency: 1,
-      duration: 0.05,
-      repeat: -1,
-      yoyo: true,
-      ease: "none"
-    });
-
-    // Track scroll progress to move/fade the titles smoothly.
-    ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: "top top",
-      end: "bottom top",
-      scrub: 1,
-      onUpdate: (self) => {
-        scrollProgressRef.current = self.progress;
-        setUiProgress(self.progress);
-      }
-    });
-
-    const setCanvasSize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      sizeRef.current = { width: w, height: h };
-      canvas.width = grainCanvas.width = w;
-      canvas.height = grainCanvas.height = h;
-    };
-    setCanvasSize();
-    const resizeHandler = () => setCanvasSize();
-    window.addEventListener('resize', resizeHandler);
-
-    // Film grain generation
-    // Generate a film-grain buffer; we paint it on the overlay canvas.
-    const generateFilmGrain = (width, height, intensity = 0.15) => {
-      const imageData = grainCtx.createImageData(width, height);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const grain = (Math.random() - 0.5) * intensity * 255;
-        data[i] = Math.max(0, Math.min(255, 128 + grain));
-        data[i + 1] = Math.max(0, Math.min(255, 128 + grain));
-        data[i + 2] = Math.max(0, Math.min(255, 128 + grain));
-        data[i + 3] = Math.abs(grain) * 3;
-      }
-
-      return imageData;
-    };
-
-    // Glitch effect functions
-    // Render the main orb with optional glitch distortions and accents.
-    const drawGlitchedOrb = (centerX, centerY, radius, hue, time, glitchIntensity) => {
-      // Save the current state
-      ctx.save();
-
-      // Random glitch triggers
-      const shouldGlitch = Math.random() < 0.1 && glitchIntensity > 0.5;
-      const glitchOffset = shouldGlitch ? (Math.random() - 0.5) * 20 * glitchIntensity : 0;
-      const glitchScale = shouldGlitch ? 1 + (Math.random() - 0.5) * 0.3 * glitchIntensity : 1;
-
-      // Apply glitch transformations
-      if (shouldGlitch) {
-        ctx.translate(glitchOffset, glitchOffset * 0.8);
-        ctx.scale(glitchScale, 1 / glitchScale);
-      }
-
-      // Main orb gradient
-      const orbGradient = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, radius * 1.5
-      );
-
-      orbGradient.addColorStop(0, `hsla(${hue + 10}, 100%, 95%, 0.9)`);
-      orbGradient.addColorStop(0.2, `hsla(${hue + 20}, 90%, 80%, 0.7)`);
-      orbGradient.addColorStop(0.5, `hsla(${hue}, 70%, 50%, 0.4)`);
-      orbGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-      ctx.fillStyle = orbGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Bright center circle with glitch
-      const centerRadius = radius * 0.3;
-      ctx.fillStyle = `hsla(${hue + 20}, 100%, 95%, 0.8)`;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, centerRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Glitch effects on the orb
-      if (shouldGlitch) {
-        // RGB separation effect
-        ctx.globalCompositeOperation = 'screen';
-
-        // Red channel offset
-        ctx.fillStyle = `hsla(100, 100%, 50%, ${0.6 * glitchIntensity})`;
-        ctx.beginPath();
-        ctx.arc(centerX + glitchOffset * 0.5, centerY, centerRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Blue channel offset
-        ctx.fillStyle = `hsla(240, 100%, 50%, ${0.5 * glitchIntensity})`;
-        ctx.beginPath();
-        ctx.arc(centerX - glitchOffset * 0.5, centerY, centerRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalCompositeOperation = 'source-over';
-
-        // Digital noise lines
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * glitchIntensity})`;
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 5; i++) {
-          const y = centerY - radius + (Math.random() * radius * 2);
-          const startX = centerX - radius + Math.random() * 20;
-          const endX = centerX + radius - Math.random() * 20;
-
-          ctx.beginPath();
-          ctx.moveTo(startX, y);
-          ctx.lineTo(endX, y);
-          ctx.stroke();
-        }
-
-        // Pixelated corruption blocks
-        ctx.fillStyle = `rgba(255, 0, 255, ${0.4 * glitchIntensity})`;
-        for (let i = 0; i < 3; i++) {
-          const blockX = centerX - radius + Math.random() * radius * 2;
-          const blockY = centerY - radius + Math.random() * radius * 2;
-          const blockSize = Math.random() * 10 + 2;
-          ctx.fillRect(blockX, blockY, blockSize, blockSize);
-        }
-      }
-
-      // Outer ring with glitch distortion
-      ctx.strokeStyle = `hsla(${hue + 20}, 80%, 70%, 0.6)`;
-      ctx.lineWidth = 2;
-
-      if (shouldGlitch) {
-        // Distorted ring segments
-        const segments = 8;
-        for (let i = 0; i < segments; i++) {
-          const startAngle = (i / segments) * Math.PI * 2;
-          const endAngle = ((i + 1) / segments) * Math.PI * 2;
-          const ringRadius = radius * 1.2 + (Math.random() - 0.5) * 10 * glitchIntensity;
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, ringRadius, startAngle, endAngle);
-          ctx.stroke();
-        }
-      } else {
-        // Normal ring
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius * 1.2, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Data corruption effect
-      if (shouldGlitch && Math.random() < 0.3) {
-        ctx.globalCompositeOperation = 'difference';
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * glitchIntensity})`;
-
-        // Horizontal glitch bars
-        for (let i = 0; i < 3; i++) {
-          const barY = centerY - radius + Math.random() * radius * 2;
-          const barHeight = Math.random() * 5 + 1;
-          ctx.fillRect(centerX - radius, barY, radius * 2, barHeight);
-        }
-
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      // Restore the context
-      ctx.restore();
-    };
-
-    // Primary render loop; we throttle grain work and keep density moderate.
-    function render() {
-      timeRef.current += 0.016;
-      const time = timeRef.current;
-      const { width, height } = sizeRef.current;
-
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, width, height);
-
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = Math.min(width, height) * 0.2;
-
-      // Atmospheric background
-      const bgGradient = ctx.createRadialGradient(
-        centerX, centerY - 50, 0,
-        centerX, centerY, Math.max(width, height) * 0.8
-      );
-
-      const hue = 180 + params.atmosphereShift * 60;
-      bgGradient.addColorStop(0, `hsla(${hue + 40}, 80%, 60%, 0.4)`);
-      bgGradient.addColorStop(0.3, `hsla(${hue}, 60%, 40%, 0.3)`);
-      bgGradient.addColorStop(0.6, `hsla(${hue - 20}, 40%, 20%, 0.2)`);
-      bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, width, height);
-
-      // Draw glitched orb
-      drawGlitchedOrb(centerX, centerY, radius, hue, time, params.glitchIntensity);
-
-      // ASCII sphere particles
-      ctx.font = '10px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      const spacing = 12;
-      const cols = Math.floor(width / spacing);
-      const rows = Math.floor(height / spacing);
-
-      for (let i = 0; i < cols && i < 100; i++) {
-        for (let j = 0; j < rows && j < 70; j++) {
-          const x = (i - cols / 2) * spacing + centerX;
-          const y = (j - rows / 2) * spacing + centerY;
-
-          const dx = x - centerX;
-          const dy = y - centerY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < radius && Math.random() > 0.4) {
-            const z = Math.sqrt(Math.max(0, radius * radius - dx * dx - dy * dy));
-            const angle = params.rotation;
-            const rotZ = dx * Math.sin(angle) + z * Math.cos(angle);
-            const brightness = (rotZ + radius) / (radius * 2);
-
-            if (rotZ > -radius * 0.3) {
-              const charIndex = Math.floor(brightness * (density.length - 1));
-              let char = density[charIndex];
-
-              // Glitch the ASCII characters near the orb
-              if (dist < radius * 0.8 && params.glitchIntensity > 0.8 && Math.random() < 0.3) {
-                const glitchChars = ['█', '▓', '▒', '░', '▄', '▀', '■', '□'];
-                char = glitchChars[Math.floor(Math.random() * glitchChars.length)];
-              }
-
-              const alpha = Math.max(0.2, brightness);
-              ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-              ctx.fillText(char, x, y);
-            }
-          }
-        }
-      }
-
-      const now = time;
-      if (!window.__themeTransitioning && now - grainLastTimeRef.current > 0.1) {
-        grainLastTimeRef.current = now;
-        grainCtx.clearRect(0, 0, width, height);
-        const grainIntensity = 0.2 + Math.sin(time * 10) * 0.02;
-        const grainImageData = generateFilmGrain(width, height, grainIntensity);
-        grainCtx.putImageData(grainImageData, 0, 0);
-
-        if (params.glitchIntensity > 0.6) {
-          grainCtx.globalCompositeOperation = 'screen';
-          for (let i = 0; i < 100; i++) {
-            const x = Math.random() * width;
-            const y = Math.random() * height;
-            const s = Math.random() * 2.5 + 0.5;
-            const opacity = Math.random() * 0.4 * params.glitchIntensity;
-            grainCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-            grainCtx.beginPath();
-            grainCtx.arc(x, y, s, 0, Math.PI * 2);
-            grainCtx.fill();
-          }
-        }
-
-        grainCtx.globalCompositeOperation = 'screen';
-        for (let i = 0; i < 60; i++) {
-          const x = Math.random() * width;
-          const y = Math.random() * height;
-          const s = Math.random() * 1.8 + 0.4;
-          const opacity = Math.random() * 0.25;
-          grainCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          grainCtx.beginPath();
-          grainCtx.arc(x, y, s, 0, Math.PI * 2);
-          grainCtx.fill();
-        }
-
-        grainCtx.globalCompositeOperation = 'multiply';
-        for (let i = 0; i < 30; i++) {
-          const x = Math.random() * width;
-          const y = Math.random() * height;
-          const s = Math.random() * 1.2 + 0.4;
-          const opacity = Math.random() * 0.5 + 0.4;
-          grainCtx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
-          grainCtx.beginPath();
-          grainCtx.arc(x, y, s, 0, Math.PI * 2);
-          grainCtx.fill();
-        }
-      }
-
-      frameRef.current = requestAnimationFrame(render);
-    }
-
-    render();
-
-    // Cleanup GSAP triggers and animation frames.
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-      window.removeEventListener('resize', resizeHandler);
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-    };
-  }, []);
+  // Video sources based on theme
+  const videoSrc = isDark ? '/videos/Hero dark.mp4' : '/videos/Hero light.mp4';
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', background: '#000' }}>
-      {/* Large text - LACQ Feynman (animated for desktop) */}
-      <div className="hero-animated-title" style={{
-        position: 'fixed',
-        bottom: '15%',
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        transform: `translateY(${uiProgress * 100}px)`,
-        opacity: Math.max(0, 1 - uiProgress * 1.5),
-        transition: 'transform 0.1s ease-out',
-        pointerEvents: 'none'
-      }}>
-        <div style={{
-          fontFamily: 'Arial Black, Arial, sans-serif',
-          fontSize: 'clamp(2.5rem, 10vw, 7rem)',
-          fontWeight: '900',
-          color: 'white',
-          textAlign: 'center',
-          lineHeight: 0.8,
-          letterSpacing: '-0.02em',
-          textShadow: '0 0 50px rgba(255, 255, 255, 0.3)',
-          filter: 'contrast(1.2)'
-        }}>
+    <section
+      id={id}
+      className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+    >
+      {/* Video Background */}
+      <video
+        key={videoSrc} // Force re-render when theme changes
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: 'brightness(0.7)' }}
+      >
+        {/* WebM format (better compression) */}
+        <source src={videoSrc.replace('.mp4', '.webm')} type="video/webm" />
+        {/* MP4 fallback for broader compatibility */}
+        <source src={videoSrc} type="video/mp4" />
+        {/* Fallback for browsers that don't support video */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20" />
+      </video>
+
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/30" />
+
+      {/* Content */}
+      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        {/* Main Title */}
+        <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-title font-black text-white mb-6 leading-none tracking-tight">
           LACQ FEYNMAN
-        </div>
-      </div>
+        </h1>
 
-      {/* Large text - LACQ Feynman (static for tablet/mobile) */}
-      <div className="hero-static-title" style={{
-        position: 'fixed',
-        bottom: '15%',
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        pointerEvents: 'none'
-      }}>
-        <div style={{
-          fontFamily: 'Arial Black, Arial, sans-serif',
-          fontSize: 'clamp(2.5rem, 10vw, 7rem)',
-          fontWeight: '900',
-          color: 'white',
-          textAlign: 'center',
-          lineHeight: 0.8,
-          letterSpacing: '-0.02em',
-          textShadow: '0 0 50px rgba(255, 255, 255, 0.3)',
-          filter: 'contrast(1.2)'
-        }}>
-          LACQ FEYNMAN
-        </div>
-      </div>
-
-
-      {/* Bottom text - Liga Acadêmica de Computação Quântica */}
-      <div style={{
-        position: 'fixed',
-        bottom: '8%',
-        left: '2rem',
-        zIndex: 50,
-        transform: `translateY(${uiProgress * 50}px)`,
-        opacity: Math.max(0, 1 - uiProgress * 1.5),
-        transition: 'transform 0.1s ease-out'
-      }}>
-        <div style={{
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '10px',
-          color: 'white',
-          letterSpacing: '1px',
-          textTransform: 'uppercase',
-          opacity: 0.7
-        }}>
+        {/* Subtitle */}
+        <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium max-w-2xl mx-auto leading-relaxed">
           Liga Acadêmica de Computação Quântica
+        </p>
+
+        {/* Optional: Call to action or scroll indicator */}
+        <div className="mt-12 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/50 rounded-full mx-auto flex justify-center">
+            <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
+          </div>
+          <p className="text-white/70 text-sm mt-2">Scroll para explorar</p>
         </div>
       </div>
 
-      {/* Canvas Container */}
-      <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh' }}>
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: '#000'
-          }}
-        />
-        {/* Film Grain Overlay Canvas */}
-        <canvas
-          ref={grainCanvasRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            mixBlendMode: 'overlay',
-            opacity: 0.6
-          }}
-        />
-      </div>
-
-      {/* CSS for exact styling and animations */}
+      {/* Scroll Indicator */}
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
-
-        @keyframes grainMove {
-          0% {
-            background-position: 0px 0px, 0px 0px, 0px 0px;
-          }
-          10% {
-            background-position: -5px -10px, 10px -15px, -10px 5px;
-          }
-          20% {
-            background-position: -10px 5px, -5px 10px, 15px -10px;
-          }
-          30% {
-            background-position: 15px -5px, -10px 5px, -5px 15px;
-          }
-          40% {
-            background-position: 5px 10px, 15px -10px, 10px -5px;
-          }
-          50% {
-            background-position: -15px 10px, 5px 15px, -10px -15px;
-          }
-          60% {
-            background-position: 10px -15px, -15px -5px, 15px 10px;
-          }
-          70% {
-            background-position: -5px 15px, 10px -10px, -15px 5px;
-          }
-          80% {
-            background-position: 15px 5px, -5px -15px, 5px -10px;
-          }
-          90% {
-            background-position: -10px -5px, 15px 10px, 10px 15px;
-          }
-          100% {
-            background-position: 0px 0px, 0px 0px, 0px 0px;
-          }
+        @keyframes scroll {
+          0% { transform: translateY(0); }
+          50% { transform: translateY(10px); }
+          100% { transform: translateY(0); }
         }
 
-        a:hover {
-          opacity: 1 !important;
-          transition: opacity 0.2s ease;
+        .scroll-indicator {
+          animation: scroll 2s ease-in-out infinite;
         }
-
-        * {
-          box-sizing: border-box;
-        }
-        .hero-static-title { display: none; }
-        .hero-animated-title { display: block; }
-        :global(.mobile-preview-wrapper) .hero-static-title { display: block; }
-        :global(.mobile-preview-wrapper) .hero-animated-title { display: none; }
-        :global(.tablet-preview-wrapper) .hero-static-title { display: block; }
-        :global(.tablet-preview-wrapper) .hero-animated-title { display: none; }
       `}</style>
-    </div>
+    </section>
   );
-};
+}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import LanguageDropdown from './LanguageDropdown';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -89,9 +90,16 @@ const Navigation = ({ sections }) => {
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="text-lg font-bold font-title focus:outline-none focus:ring-2 focus:rounded nav-link"
+              className="flex items-center gap-3 text-lg font-bold font-title focus:outline-none focus:ring-2 focus:rounded nav-link"
             >
-              LACQ Feynman
+              <Image
+                src="/images/lacqf/logo.webp"
+                alt="LACQ Feynman Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain"
+              />
+              <span>LACQ Feynman</span>
             </Link>
 
             {/* Mobile menu button — toggles an inline drawer below the header */}

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import {
   Instagram,
   Linkedin,
@@ -15,9 +16,21 @@ const Footer = () => {
         color: 'var(--text-secondary)'
       }}
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 items-center gap-8">
 
-        <div className="text-center md:text-left">
+        {/* Logo Section - Left */}
+        <div className="flex justify-center md:justify-start">
+          <Image
+            src="/images/lacqf/logo completa.webp"
+            alt="LACQ Feynman Logo Completa"
+            width={120}
+            height={60}
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+
+        {/* Text Section - Center */}
+        <div className="text-center">
           <h4
             className="text-lg font-semibold font-title"
             style={{ color: 'var(--text-primary)' }}
@@ -32,7 +45,8 @@ const Footer = () => {
           </p>
         </div>
 
-        <div className="flex gap-6">
+        {/* Social Links Section - Right */}
+        <div className="flex justify-center md:justify-end gap-6">
           <a
             href="https://www.linkedin.com/company/seu-linkedin"
             target="_blank"
