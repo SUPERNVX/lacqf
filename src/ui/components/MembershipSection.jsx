@@ -29,7 +29,7 @@ const MembershipSection = ({ id }) => {
         },
         {
             icon: <Atom className="w-6 h-6 text-primary-500" />,
-            titulo: t('benefitsResearchTitle'),
+            titulo: t('researchTitle'),
             texto: t('researchText'),
         },
         {
@@ -81,10 +81,10 @@ const MembershipSection = ({ id }) => {
                 {/* Header da Seção */}
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-title font-bold mb-4">
-                        <span className="text-primary">Junte-se</span> à Comunidade
+                        <span className="text-primary">{t('joinCommunityTitle').split(' ')[0]}</span> {t('joinCommunityTitle').substring(t('joinCommunityTitle').indexOf(' ') + 1)}
                     </h2>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Faça parte da revolução quântica. Uma única conta, acesso a todo o ecossistema.
+                        {t('joinCommunitySubtitle')}
                     </p>
                 </div>
 
@@ -96,10 +96,10 @@ const MembershipSection = ({ id }) => {
                         <div className="mb-6">
                             <h3 className="text-2xl font-title font-semibold mb-2 flex items-center gap-2">
                                 <Rocket className="w-6 h-6 text-primary" />
-                                Por que a LACQ Feynman?
+                                {t('whyLACQFTitle')}
                             </h3>
                             <p className="text-muted-foreground">
-                                Descubra os benefícios exclusivos de ser um membro da nossa liga acadêmica.
+                                {t('whyLACQFSubtitle')}
                             </p>
                         </div>
 
@@ -159,8 +159,8 @@ const MembershipSection = ({ id }) => {
                                 className="h-12 w-auto object-contain"
                             />
                             <div className="text-left">
-                                <h4 className="text-xl font-title font-semibold mb-1">Explore Mais</h4>
-                                <p className="text-sm text-muted-foreground">Conteúdos curados para impulsionar seu aprendizado.</p>
+                                <h4 className="text-xl font-title font-semibold mb-1">{t('exploreMoreTitle')}</h4>
+                                <p className="text-sm text-muted-foreground">{t('exploreMoreSubtitle')}</p>
                             </div>
                         </div>
 

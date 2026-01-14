@@ -105,5 +105,12 @@
   "event2Title": "VII Quantum Computing Workshop - UFSC",
   "event2Date": "October 2024",
   "eventsDetails": "View details",
-  "eventsComingSoon": "More events will be added soon. Stay tuned."
+  "eventsComingSoon": "More events will be added soon. Stay tuned.",
+  "heroScrollText": "Scroll to explore",
+  "exploreMoreTitle": "Explore More",
+  "exploreMoreSubtitle": "Curated content to boost your learning.",
+  "whyLACQFTitle": "Why LACQ Feynman?",
+  "whyLACQFSubtitle": "Discover the exclusive benefits of being a member of our academic league.",
+  "joinCommunityTitle": "Join the Community",
+  "joinCommunitySubtitle": "Be part of the quantum revolution. One account, access to the entire ecosystem."
 }
